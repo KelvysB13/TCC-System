@@ -180,8 +180,6 @@ start bin/monitor.exe
 FOR /L %i IN (1,1,8) DO start bin/sensor.exe
 ```
 
----
-
 ## 📊 Métricas de Rendimiento
 
 <div align="center">
@@ -191,8 +189,6 @@ FOR /L %i IN (1,1,8) DO start bin/sensor.exe
 | Hasta 10 | Tiempo real | ~0% | 0 | Sin fugas |
 
 </div>
-
----
 
 ## 👥 Equipo de Desarrollo
 
