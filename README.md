@@ -91,14 +91,14 @@ La arquitectura se basa en un **pipeline completamente desacoplado y orientado a
 ```
 TCC-System/
 │
-├── 📂 bin/                    # ¡Obligatorio! Ejecutables .exe
-├── 📂 docs/                   # Informes académicos y diagramas
+├── 📂 bin/                    # Ejecutables .exe
+├── 📂 docs/                   # Documentación y diagramas
 ├── 📂 include/                # Cabeceras compartidas globales
 │   │
 │   ├── 📄 common.h            # Estructuras y definiciones comunes
 │   └── 📄 ipc_protocol.h      # Protocolos de comunicación IPC
 │   
-├── 📂 src/                   # Código fuente por módulo
+├── 📂 src/                   # Código fuente
 │   │
 │   ├── 📂 sensors/           # 🚗 Módulo 1
 │   ├── 📂 broker/            # 🧠 Módulo 2
