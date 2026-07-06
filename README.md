@@ -10,27 +10,7 @@
   <img src="https://img.shields.io/badge/API-Win32-008000?style=for-the-badge&logo=windows&logoColor=white" alt="Win32" />
 
   <br/><br/>
-  <p><em>Backend de telemetría F1 🏁 — 100% C nativo para Windows</em></p>
 </div>
-
----
-<table>
-<tr>
-<td>⚡ Ingesta masiva de datos a alta velocidad</td>
-</tr>
-<tr>
-<td>🔄 Comunicación eficiente entre procesos (IPC)</td>
-</tr>
-<tr>
-<td>🔒 Sincronización segura de hilos bajo concurrencia extrema</td>
-</tr>
-</table>
-
-Desarrollado exclusivamente para **Microsoft Windows** utilizando la API nativa **Win32** (`windows.h`), garantizando:
-
-| 💚 | 🛡️ |
-|---|---|
-| CPU ~0% en idle (sin espera activa) | Prevención absoluta de *race conditions* y *deadlocks* |
 
 ---
 
@@ -109,18 +89,22 @@ La arquitectura se basa en un **pipeline completamente desacoplado y orientado a
 ## 📁 Estructura del Repositorio
 
 ```
-tcc-system/
+TCC-System/
 │
 ├── 📂 bin/                    # ¡Obligatorio! Ejecutables .exe
 ├── 📂 docs/                   # Informes académicos y diagramas
 ├── 📂 include/                # Cabeceras compartidas globales
+│   │
 │   ├── 📄 common.h            # Estructuras y definiciones comunes
 │   └── 📄 ipc_protocol.h      # Protocolos de comunicación IPC
-├── 📂 src/                    # Código fuente por módulo
-│   ├── 📂 modulo1_sensores/   # 🚗 Módulo 1
-│   ├── 📂 modulo2_broker/     # 🧠 Módulo 2
-│   ├── 📂 modulo3_dispatcher/ # ⚙️ Módulo 3
-│   └── 📂 modulo4_monitor/    # 📊 Módulo 4
+│   
+├── 📂 src/                   # Código fuente por módulo
+│   │
+│   ├── 📂 sensors/           # 🚗 Módulo 1
+│   ├── 📂 broker/            # 🧠 Módulo 2
+│   ├── 📂 dispatcher/        # ⚙️ Módulo 3
+│   └── 📂 monitor/           # 📊 Módulo 4
+│   
 └── 📄 Makefile                # Script de compilación
 ```
 
@@ -151,42 +135,12 @@ make All
 <summary><strong>Opción 2:</strong> Compilación directa con MSVC</summary>
 
 ```bash
-cl.exe /W4 /O2 src/modulo1_sensores/sensor.c /Fe:bin/sensor.exe
-cl.exe /W4 /O2 src/modulo2_broker/broker.c /Fe:bin/broker.exe
-cl.exe /W4 /O2 src/modulo3_dispatcher/dispatcher.c /Fe:bin/dispatcher.exe
-cl.exe /W4 /O2 src/modulo4_monitor/monitor.c /Fe:bin/monitor.exe
+cl.exe /W4 /O2 src/sensores/sensor.c /Fe:bin/sensor.exe
+cl.exe /W4 /O2 src/broker/broker.c /Fe:bin/broker.exe
+cl.exe /W4 /O2 src/dispatcher/dispatcher.c /Fe:bin/dispatcher.exe
+cl.exe /W4 /O2 src/monitor/monitor.c /Fe:bin/monitor.exe
 ```
-
 </details>
-
-### 🎮 Ejecución — Prueba de Estrés Concurrente
-
-```mermaid
-graph LR
-    A[broker.exe] --> B[dispatcher.exe]
-    B --> C[monitor.exe]
-    D[sensor.exe x8] --> A
-```
-
-```bash
-:: 1. Iniciar el backend
-start bin/broker.exe
-start bin/dispatcher.exe
-
-:: 2. Abrir el monitor
-start bin/monitor.exe
-
-:: 3. Lanzar 8 sensores simultáneos
-FOR /L %i IN (1,1,8) DO start bin/sensor.exe
-```
-
-## 📊 Métricas de Rendimiento
-
-<div align="center">
-
-| 🏎️ Sensores | ⚡ Tasa de ingesta | 💚 CPU en idle | 🔒 Condiciones de carrera | 🧠 Memoria |
-|:-----------:|:-----------------:|:--------------:|:------------------------:|:----------:|
-| Hasta 10 | Tiempo real | ~0% | 0 | Sin fugas |
 
 </div>
 
@@ -196,9 +150,9 @@ FOR /L %i IN (1,1,8) DO start bin/sensor.exe
 
 | | Módulo | Responsable |
 |---|--------|:-----------:|
-| 🚗 | Sensores | Responsable 1 |
-| 🧠 | Broker | Responsable 2 |
-| ⚙️ | Dispatcher | Responsable 3 |
-| 📊 | Monitor | Responsable 4 |
+| 🚗 | Sensores | Samuel Prado |
+| 🧠 | Broker | Rolannys Sanchez |
+| ⚙️ | Dispatcher | Kelvys Concepcion |
+| 📊 | Monitor | Miguel Mora |
 
 </div>
