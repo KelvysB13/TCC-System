@@ -40,15 +40,7 @@ Desarrollado exclusivamente para **Microsoft Windows** utilizando la API nativa 
 
 La arquitectura se basa en un **pipeline completamente desacoplado y orientado a eventos**, donde los componentes se comunican estrictamente a través de primitivas IPC de Windows a nivel de Kernel:
 
-<pre>
-  🚗 Sensores  ──Named Pipe──▶  🧠 Broker  ──Shared Mem──▶  ⚙️ Dispatcher  ──File──▶  💾 Disco
-       │                            │                            │
-       └─────────── Eventos ────────┴────────── Eventos ────────┘
-                                                           │
-                                                    ┌──────┴──────┐
-                                                    │ 📊 Monitor   │
-                                                    └─────────────┘
-</pre>
+<img src="docs/architecture.svg" alt="Arquitectura del sistema" width="800"/>
 
 ---
 
