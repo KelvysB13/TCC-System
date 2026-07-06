@@ -1,5 +1,7 @@
 <div align="center">
-  <h1>🏎️ Sistema de Telemetría y Control Concurrente</h1>
+  <p align="center">
+    <img src="https://readme-typing-svg.demolab.com?font=Segoe+UI&weight=600&size=30&duration=4000&pause=2000&color=FFFFFF&center=true&vCenter=true&width=1000&height=60&lines=%F0%9F%8F%8E%EF%B8%8F+TCC-System+-+Sistema+de+Telemetr%C3%ADa+y+Control+Concurrente" alt="Typing animation">
+  </p>
 
 <img src="docs/f1-car.png" alt="F1 Pixel Art" width="500"/>
 
