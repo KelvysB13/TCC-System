@@ -1,7 +1,12 @@
 <div align="center">
   <h1>🏎️ TCC-System</h1>
+  
   <p><strong>Sistema de Telemetría y Control Concurrente</strong></p>
 
+  
+  
+ Un sistema de telemetría automotriz y control concurrente de **alto rendimiento** nativo para Win32, desarrollado puramente en **C**. 🔥
+ 
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" />
   <img src="https://img.shields.io/badge/Language-C-00599C?style=for-the-badge&logo=c&logoColor=white" alt="C" />
   <img src="https://img.shields.io/badge/API-Win32-008000?style=for-the-badge&logo=windows&logoColor=white" alt="Win32" />
@@ -11,11 +16,6 @@
 </div>
 
 ---
-
-## 📖 Descripción General
-
-Un sistema de telemetría automotriz y control concurrente de **alto rendimiento** nativo para Win32, desarrollado puramente en **C** 🔥
-
 <table>
 <tr>
 <td>⚡ Ingesta masiva de datos a alta velocidad</td>
@@ -207,18 +207,4 @@ FOR /L %i IN (1,1,8) DO start bin/sensor.exe
 | ⚙️ | Dispatcher | Responsable 3 |
 | 📊 | Monitor | Responsable 4 |
 
-</div>
-
----
-
-## 📝 Licencia
-
-> Este proyecto fue desarrollado con **fines académicos** para demostrar conceptos avanzados de programación concurrente y comunicación entre procesos en sistemas Windows.
-
----
-
-<div align="center">
-  <a href="#">⬆ Volver al inicio</a>
-  <br/><br/>
-  <strong>Hecho con ❤️ y mucho 🧵 en C para Windows</strong>
 </div>
