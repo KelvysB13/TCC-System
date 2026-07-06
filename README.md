@@ -1,12 +1,8 @@
 <div align="center">
-  <h1>🏎️ TCC-System</h1>
-  
-  <p><strong>Sistema de Telemetría y Control Concurrente</strong></p>
-  <br/>
-  <img src="docs/f1-pixel-art.gif" alt="F1 Pixel Art" width="500"/>
+  <h1>🏎️ Sistema de Telemetría y Control Concurrente</h1>
 
-  
-  
+<img src="docs/f1-car.png" alt="F1 Pixel Art" width="500"/>
+
  Un sistema de telemetría automotriz y control concurrente de **alto rendimiento** nativo para Win32, desarrollado puramente en **C**. 🔥
  
   <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" />
