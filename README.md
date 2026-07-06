@@ -2,6 +2,8 @@
   <h1>🏎️ TCC-System</h1>
   
   <p><strong>Sistema de Telemetría y Control Concurrente</strong></p>
+  <br/>
+  <img src="docs/f1-pixel-art.gif" alt="F1 Pixel Art" width="500"/>
 
   
   
