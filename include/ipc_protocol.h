@@ -27,4 +27,6 @@
 
 #define TCC_DEFAULT_INTERVAL_MS     100
 
+/* ── Modulo 3: Dispatcher IPC ─────────────────────────────── */
+
 #endif

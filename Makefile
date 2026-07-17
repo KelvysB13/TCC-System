@@ -1,25 +1,26 @@
-#
-# TCC-System - Sistema de Telemetria y Control Concurrente
-# Modulo 1  - Subsistema de Sensores (Procesos Independientes)
-#
-# Desarrollador: Samuel Prado
-# C.I:          31.701.746
-#
-
 CC       = gcc
 CFLAGS   = -Wall -Wextra -O2 -std=c99
 LDFLAGS  =
 INCLUDES = -Iinclude
 
-SENSOR_SRC  = src/sensors/sensor.c
-SENSOR_OUT  = bin/sensor.exe
+SENSOR_SRC     = src/sensors/sensor.c
+SENSOR_OUT     = bin/sensor.exe
 
-.PHONY: All sensor clean
+DISPATCHER_SRC = src/dispatcher/dispatcher.c src/dispatcher/buffer.c src/dispatcher/processor.c
+DISPATCHER_OUT = bin/dispatcher.exe
 
-All: sensor
+.PHONY: All sensor dispatcher clean run
+
+All: sensor dispatcher
 
 sensor:
 	$(CC) $(CFLAGS) $(INCLUDES) $(SENSOR_SRC) -o $(SENSOR_OUT) $(LDFLAGS)
+
+dispatcher:
+	$(CC) $(CFLAGS) $(INCLUDES) $(DISPATCHER_SRC) -o $(DISPATCHER_OUT) $(LDFLAGS)
+
+run: dispatcher
+	$(DISPATCHER_OUT)
 
 clean:
 	-del /Q bin\*.exe 2>nul
