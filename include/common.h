@@ -57,6 +57,12 @@ typedef struct {
 typedef enum { CRIT, ALTA, NORM, BAJA } Prioridad;
 
 typedef struct {
+    DWORD        idSensor;
+    DWORD        idEvento;
+    SENSOR_TYPE  tipo;
+    Prioridad    prio;
+    ULONGLONG    ts;
+    int          datos[4];
 } Evento;
 
 typedef struct {
