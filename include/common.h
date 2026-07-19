@@ -1,9 +1,11 @@
 /*
  * TCC-System - Sistema de Telemetria y Control Concurrente
- * Modulo 1  - Subsistema de Sensores (Procesos Independientes)
  *
- * Desarrollador: Samuel Prado
- * C.I:          31.701.746
+ * Integrantes:
+ *   Modulo 1 - Samuel Prado     (C.I: 31.701.746)
+ *   Modulo 2 - Rolannys Sanchez (C.I:28.550.912)
+ *   Modulo 3 - Kelvys Concepcion
+ *   Modulo 4 - 
  *
  * common.h - Tipos, enumeraciones y estructuras compartidas
  *            entre todos los modulos del sistema.
@@ -17,6 +19,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* ── Modulo 1: Sensores ──────────────────────────────────── */
 
 typedef enum {
     SENSOR_TYPE_ENGINE = 1,
@@ -53,12 +57,12 @@ typedef struct {
 typedef enum { CRIT, ALTA, NORM, BAJA } Prioridad;
 
 typedef struct {
-    DWORD        idSensor;    // ID de la instancia del sensor (SENSOR_EVENT_HEADER.dwSensorId)
-    DWORD        idEvento;    // Numero de secuencia del evento (SENSOR_EVENT_HEADER.dwEventId)
-    SENSOR_TYPE  tipo;        // Tipo de sensor
-    Prioridad    prio;        // Prioridad asignada
-    ULONGLONG    ts;          // Timestamp en microsegundos (SENSOR_EVENT_HEADER.ullTimestamp)
-    int          datos[4];    // Valores del payload procesado
+    DWORD        idSensor;
+    DWORD        idEvento;
+    SENSOR_TYPE  tipo;
+    Prioridad    prio;
+    ULONGLONG    ts;
+    int          datos[4];
 } Evento;
 
 typedef struct {
@@ -67,6 +71,51 @@ typedef struct {
     volatile LONG cola;
     volatile LONG cnt;
 } BufCirc;
+
+/* ── Modulo 2: Broker (Memoria Compartida) ──────────────────
+ *
+ * SHARED_BUFFER es la estructura central alojada en un File Mapping
+ * de Windows. Es visible por:
+ *   - Broker (M2): escribe eventos entrantes desde los sensores
+ *   - Dispatcher (M3): lee eventos para distribuirlos a workers
+ *   - Monitor (M4): lee estadisticas en tiempo real
+ *
+ * La sincronizacion se realiza mediante objetos named (semafotos +
+ * mutex) definidos en ipc_protocol.h.
+ *
+ * Campos accesibles por M3 (Dispatcher):
+ *   - cabeza, cola, cnt: estado del buffer circular
+ *   - items[CAP_BUF]:    arreglo de eventos para procesar
+ *   - Debe usar los semaforos TCC_SEM_EMPTY_NAME / TCC_SEM_FULL_NAME
+ *     y el mutex TCC_MUTEX_NAME para acceso sincronizado
+ *
+ * Campos accesibles por M4 (Monitor):
+ *   - dwEventsReceived:      total de eventos ingestados
+ *   - dwActiveSensors:       sensores actualmente conectados
+ *   - dwBufferMaxOccupancy:  pico maximo de ocupacion del buffer
+ *   - cnt:                   ocupacion actual del buffer
+ *   - adwSensorIds/Types:    tabla de sensores conectados
+ *   - Solo lectura, no necesita sincronizacion adicional
+ *     (lectura de valores volatiles es segura en x86) */
+
+#define MAX_SENSOR_SLOTS    32
+
+typedef struct {
+    /* ── Estado del buffer circular (M3 escribe, M2 lee) ─── */
+    volatile LONG  cabeza;             /* Indice de proxima escritura */
+    volatile LONG  cola;               /* Indice de proxima lectura */
+    volatile LONG  cnt;                /* Cantidad de elementos actuales */
+    Evento         items[CAP_BUF];     /* Arreglo circular de eventos */
+
+    /* ── Estadisticas en tiempo real para M4 (Monitor) ───── */
+    volatile LONG  dwEventsReceived;      /* Total de eventos recibidos */
+    volatile LONG  dwActiveSensors;       /* Sensores actualmente conectados */
+    volatile LONG  dwBufferMaxOccupancy;  /* Ocupacion maxima historica */
+
+    /* ── Tabla de sensores conectados (para M4) ──────────── */
+    DWORD          adwSensorIds[MAX_SENSOR_SLOTS];     /* IDs de sensores por slot */
+    DWORD          adwSensorTypes[MAX_SENSOR_SLOTS];   /* Tipos de sensores por slot */
+} SHARED_BUFFER;
 
 #ifdef __cplusplus
 }
