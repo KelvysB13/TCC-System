@@ -5,7 +5,7 @@
  *   Modulo 1 - Samuel Prado     (C.I: 31.701.746)
  *   Modulo 2 - Rolannys Sanchez (C.I:28.550.912)
  *   Modulo 3 - Kelvys Concepcion
- *   Modulo 4 - 
+ *   Modulo 4 - Miguel Mora
  *
  * common.h - Tipos, enumeraciones y estructuras compartidas
  *            entre todos los modulos del sistema.

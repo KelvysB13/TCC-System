@@ -378,6 +378,17 @@ Broker_ReaderThread(LPVOID lpParam)
     /* Decrementar contador de sensores activos en memoria compartida */
     InterlockedDecrement(&g_pShared->dwActiveSensors);
 
+    /* Limpiar la entrada de este sensor en la tabla compartida.
+     * Sin esto, el Monitor (M4) seguiria mostrando este sensor
+     * en su dashboard aunque ya no este conectado. */
+    {
+        DWORD dwSlotIdx = (DWORD)(pSlot - g_slots);
+        if (dwSlotIdx < g_dwSlotCount) {
+            g_pShared->adwSensorTypes[dwSlotIdx] = 0;
+            g_pShared->adwSensorIds[dwSlotIdx]   = 0;
+        }
+    }
+
     /* Cerrar el pipe SOLO si fue una desconexion normal (g_bRunning == TRUE).
      * Si es un shutdown, Broker_Detener ya cerro el handle y no debemos
      * hacer doble close. */
