@@ -12,9 +12,12 @@ BROKER_OUT     = bin/broker.exe
 DISPATCHER_SRC = src/dispatcher/dispatcher.c src/dispatcher/buffer.c src/dispatcher/processor.c
 DISPATCHER_OUT = bin/dispatcher.exe
 
-.PHONY: All sensor broker dispatcher clean run
+MONITOR_SRC    = src/monitor/monitor.c
+MONITOR_OUT    = bin/monitor.exe
 
-All: sensor broker dispatcher
+.PHONY: All sensor broker dispatcher monitor clean run
+
+All: sensor broker dispatcher monitor
 
 sensor:
 	$(CC) $(CFLAGS) $(INCLUDES) $(SENSOR_SRC) -o $(SENSOR_OUT) $(LDFLAGS)
@@ -24,6 +27,9 @@ broker:
 
 dispatcher:
 	$(CC) $(CFLAGS) $(INCLUDES) $(DISPATCHER_SRC) -o $(DISPATCHER_OUT) $(LDFLAGS)
+
+monitor:
+	$(CC) $(CFLAGS) $(INCLUDES) $(MONITOR_SRC) -o $(MONITOR_OUT) $(LDFLAGS)
 
 run: broker
 	$(BROKER_OUT)
