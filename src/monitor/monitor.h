@@ -73,10 +73,8 @@ extern "C" {
 #define ANSI_BG_RED      "\x1b[41m"
 #define ANSI_BG_GREEN    "\x1b[42m"
 
-/* Mover cursor a posicion (1,1) y limpiar pantalla */
+/* Mover cursor a posicion (1,1) y limpiar pantalla (solo para inicio) */
 #define ANSI_CLEAR       "\x1b[2J\x1b[H"
-/* Mover cursor al inicio sin limpiar (scroll suave) */
-#define ANSI_HOME        "\x1b[H"
 
 /* ── Tipos de resultado de Monitor_Iniciar ────────────────────── */
 

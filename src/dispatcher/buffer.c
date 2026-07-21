@@ -1,168 +1,142 @@
 // Creador: Kelvys Concepcion
 // Ultima Modificacion: 16/07/2026
-// Descripcion: Buffer circular con semaforos y generador de datos mock.
+// Descripcion: Buffer circular sobre Memoria Compartida IPC (File Mapping)
+//              sincronizado con semaforos named y mutex del Broker (M2).
 
 #include "buffer.h"
-#include <stdlib.h>
+#include "../../include/ipc_protocol.h"
 #include <stdio.h>
 
-static BufCirc  g_buf;
-static HANDLE   g_hVacio;   // Semáforo: contador de slots libres */
-static HANDLE   g_hLleno;   // Semáforo: contador de slots ocupados */
-static HANDLE   g_hMutex;   // Mutex: acceso exclusivo al buffer */
-static HANDLE   g_hSimul;   // Thread del generador simulado */
-static volatile LONG g_correr = 1;
-static LONGLONG g_freq;     // Frecuencia QPC para conversion a microsegundos
+static SHARED_BUFFER* g_pShared  = NULL; /* Puntero a la memoria compartida */
+static HANDLE         g_hMapFile = NULL; /* Handle del File Mapping */
+static HANDLE         g_hVacio   = NULL; /* Sem. named: slots libres (Broker) */
+static HANDLE         g_hLleno   = NULL; /* Sem. named: slots ocupados (Broker) */
+static HANDLE         g_hMutex   = NULL; /* Mutex named: exclusion mutua (Broker) */
 
-// Genera un entero aleatorio en [lo, hi].
-static DWORD gen_rango(DWORD lo, DWORD hi)
-{
-    return lo + (DWORD)((hi - lo + 1) * (rand() / (RAND_MAX + 1.0)));
-}
-
-// Llena un evento con datos de sensor aleatorios y realistas.
-static void gen_ev_aleat(Evento *ev)
-{
-    static DWORD cont = 0;
-    LARGE_INTEGER qpc;
-    ev->idSensor  = (DWORD)(1 + rand() % 10);  // Simula 10 instancias de sensor
-    ev->idEvento  = ++cont;                     // Secuencia global de eventos
-    ev->tipo      = (SENSOR_TYPE)(1 + rand() % 4);
-    ev->prio      = (Prioridad)(rand() % 4);
-    QueryPerformanceCounter(&qpc);
-    ev->ts        = (ULONGLONG)((qpc.QuadPart * 1000000LL) / g_freq);
-
-    switch (ev->tipo)
-    {
-        case SENSOR_TYPE_ENGINE:
-
-            ev->datos[0] = (int)gen_rango(2000, 12000);
-            ev->datos[1] = (int)gen_rango(80, 120);
-            ev->datos[2] = (int)gen_rango(20, 80);
-            ev->datos[3] = (int)gen_rango(0, 100);
-            break;
-
-        case SENSOR_TYPE_TIRES:
-
-            ev->datos[0] = (int)gen_rango(2800, 3600);
-            ev->datos[1] = (int)gen_rango(60, 110);
-            ev->datos[2] = (int)gen_rango(0, 100);
-            ev->datos[3] = (int)gen_rango(0, 350);
-            break;
-
-        case SENSOR_TYPE_BRAKES:
-
-            ev->datos[0] = (int)gen_rango(100, 800);
-            ev->datos[1] = (int)gen_rango(0, 200);
-            ev->datos[2] = (int)gen_rango(0, 100);
-            ev->datos[3] = (int)gen_rango(0, 100);
-            break;
-
-        case SENSOR_TYPE_GPS:
-
-            ev->datos[0] = (int)gen_rango(0, 1800) - 900;
-            ev->datos[1] = (int)gen_rango(0, 3600) - 1800;
-            ev->datos[2] = (int)gen_rango(0, 350);
-            ev->datos[3] = (int)gen_rango(0, 359);
-            break;
-    }
-}
-
-// Bucle del generador simulado: crea eventos y los escribe al buffer.
-static DWORD WINAPI bucle_simul(LPVOID arg)
-{
-    (void)arg;
-
-    while (g_correr) 
-    {
-        Evento ev;
-        gen_ev_aleat(&ev);
-        buf_escribir(&ev);
-        Sleep(50 + rand() % 100);
-    }
-
-    return 0;
-}
-
-// Inicializa el buffer circular, semáforos, mutex y el hilo generador.
+// Inicializa la conexion a la memoria compartida del Broker.
+// Abre el File Mapping, los semaforos named y el mutex creados por M2.
 int buf_iniciar(void)
 {
-    LARGE_INTEGER li;
-    QueryPerformanceFrequency(&li);
-    g_freq = li.QuadPart;
-
-    g_hVacio = CreateSemaphoreW(NULL, CAP_BUF, CAP_BUF, NULL);
-    g_hLleno = CreateSemaphoreW(NULL, 0, CAP_BUF, NULL);
-    g_hMutex = CreateMutexW(NULL, FALSE, NULL);
-
-    if (!g_hVacio || !g_hLleno || !g_hMutex) 
-    {
-        if (g_hVacio) CloseHandle(g_hVacio);
-        if (g_hLleno) CloseHandle(g_hLleno);
-        if (g_hMutex) CloseHandle(g_hMutex);
-
+    /* Abrir el File Mapping creado por el Broker */
+    g_hMapFile = OpenFileMappingA(
+        FILE_MAP_ALL_ACCESS,
+        FALSE,
+        TCC_SHARED_MEM_NAME
+    );
+    if (!g_hMapFile) {
+        fprintf(stderr, "ERROR: OpenFileMappingA(%s) failed (%lu). "
+                        "Broker (M2) debe ejecutarse primero.\n",
+                TCC_SHARED_MEM_NAME, GetLastError());
         return -1;
     }
 
-    g_buf.cabeza = g_buf.cola = g_buf.cnt = 0;
+    /* Mapear la memoria compartida en el espacio de este proceso */
+    g_pShared = (SHARED_BUFFER*)MapViewOfFile(
+        g_hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0
+    );
+    if (!g_pShared) {
+        fprintf(stderr, "ERROR: MapViewOfFile failed (%lu)\n", GetLastError());
+        CloseHandle(g_hMapFile);
+        g_hMapFile = NULL;
+        return -1;
+    }
 
-    g_hSimul = CreateThread(NULL, 0, bucle_simul, NULL, 0, NULL);
+    /* Abrir semaforo named de slots libres (creado por Broker) */
+    g_hVacio = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, TCC_SEM_EMPTY_NAME);
+    if (!g_hVacio) {
+        fprintf(stderr, "ERROR: OpenSemaphoreA(%s) failed (%lu)\n",
+                TCC_SEM_EMPTY_NAME, GetLastError());
+        buf_destruir();
+        return -1;
+    }
 
-    if (!g_hSimul) 
-    { 
-        buf_destruir(); 
-        return -1; 
+    /* Abrir semaforo named de slots ocupados (creado por Broker) */
+    g_hLleno = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, TCC_SEM_FULL_NAME);
+    if (!g_hLleno) {
+        fprintf(stderr, "ERROR: OpenSemaphoreA(%s) failed (%lu)\n",
+                TCC_SEM_FULL_NAME, GetLastError());
+        buf_destruir();
+        return -1;
+    }
+
+    /* Abrir mutex named (creado por Broker) */
+    g_hMutex = OpenMutexA(MUTEX_ALL_ACCESS, FALSE, TCC_MUTEX_NAME);
+    if (!g_hMutex) {
+        fprintf(stderr, "ERROR: OpenMutexA(%s) failed (%lu)\n",
+                TCC_MUTEX_NAME, GetLastError());
+        buf_destruir();
+        return -1;
     }
 
     return 0;
 }
 
-// Lee un evento del buffer circular (bloquea si está vacío).
+// Lee un evento del buffer circular en memoria compartida.
+// Bloquea en el semaforo de slots ocupados si el buffer esta vacio
+// (espera pasiva del kernel, sin busy waiting).
 int buf_leer(Evento *ev)
 {
+    if (!ev || !g_pShared) return -1;
+
+    /* Esperar a que haya datos disponibles (bloqueante, pasivo) */
     if (WaitForSingleObject(g_hLleno, INFINITE) != WAIT_OBJECT_0) return -1;
+    /* Exclusion mutua con el Broker (M2) y otros lectores */
     if (WaitForSingleObject(g_hMutex, INFINITE) != WAIT_OBJECT_0) return -1;
 
-    *ev = g_buf.items[g_buf.cola % CAP_BUF];
-    g_buf.cola++;
-    g_buf.cnt--;
+    /* Leer evento del buffer circular compartido */
+    *ev = g_pShared->items[g_pShared->cola % CAP_BUF];
+    g_pShared->cola++;
+    g_pShared->cnt--;
 
     ReleaseMutex(g_hMutex);
+    /* Notificar al Broker que hay un slot libre mas */
     ReleaseSemaphore(g_hVacio, 1, NULL);
 
     return 0;
 }
 
-// Escribe un evento al buffer circular (bloquea si está lleno).
+// Escribe un evento al buffer circular en memoria compartida.
+// Bloquea en el semaforo de slots libres si el buffer esta lleno.
+// Usado internamente (el writer principal es el Broker M2).
 int buf_escribir(Evento *ev)
 {
+    if (!ev || !g_pShared) return -1;
+
     if (WaitForSingleObject(g_hVacio, INFINITE) != WAIT_OBJECT_0) return -1;
     if (WaitForSingleObject(g_hMutex, INFINITE) != WAIT_OBJECT_0) return -1;
 
-    g_buf.items[g_buf.cabeza % CAP_BUF] = *ev;
-    g_buf.cabeza++;
-    g_buf.cnt++;
+    g_pShared->items[g_pShared->cabeza % CAP_BUF] = *ev;
+    g_pShared->cabeza++;
+    g_pShared->cnt++;
+
+    /* Registrar ocupacion maxima historica (para el Monitor M4) */
+    if (g_pShared->cnt > g_pShared->dwBufferMaxOccupancy) {
+        g_pShared->dwBufferMaxOccupancy = g_pShared->cnt;
+    }
 
     ReleaseMutex(g_hMutex);
     ReleaseSemaphore(g_hLleno, 1, NULL);
 
+    InterlockedIncrement(&g_pShared->dwEventsReceived);
+
     return 0;
 }
 
-// Libera todos los recursos del buffer y detiene el generador.
+// Libera todos los recursos: cierra handles del File Mapping,
+// semaforos y mutex. No deja fugas de handles del kernel.
 void buf_destruir(void)
 {
-    g_correr = 0;
-
-    if (g_hSimul) 
-    {
-        ReleaseSemaphore(g_hVacio, 1, NULL);
-        WaitForSingleObject(g_hSimul, 1000);
-        CloseHandle(g_hSimul);
-        g_hSimul = NULL;
-    }
-    
     if (g_hVacio) { CloseHandle(g_hVacio); g_hVacio = NULL; }
     if (g_hLleno) { CloseHandle(g_hLleno); g_hLleno = NULL; }
     if (g_hMutex) { CloseHandle(g_hMutex); g_hMutex = NULL; }
+
+    if (g_pShared) {
+        UnmapViewOfFile(g_pShared);
+        g_pShared = NULL;
+    }
+
+    if (g_hMapFile) {
+        CloseHandle(g_hMapFile);
+        g_hMapFile = NULL;
+    }
 }

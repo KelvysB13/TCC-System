@@ -46,10 +46,10 @@
 #include <string.h>
 #include <stdarg.h>
 
-/* CancelIoEx: declaracion manual para compatibilidad con toolchains antiguos.
- * La funcion existe en kernel32.dll desde Windows Vista, pero algunos
- * headers de MinGW no la exponen con _WIN32_WINNT=0x0601 */
+/* CancelIoEx: declaracion manual solo si el toolchain no la provee */
+#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 5))
 BOOL WINAPI CancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped);
+#endif
 
 /* ==================================================================
  *  ESTADO GLOBAL DEL BROKER
@@ -438,8 +438,8 @@ Broker_ListenerThread(LPVOID lpParam)
         pSlot->hPipe = CreateNamedPipeA(
             pSlot->szPipeName,
             PIPE_ACCESS_INBOUND,               /* Solo lectura (sensor escribe) */
-            PIPE_TYPE_MESSAGE |                /* Flujo de mensajes */
-            PIPE_READMODE_MESSAGE |            /* Lectura por mensajes */
+            PIPE_TYPE_BYTE |                   /* Flujo de bytes */
+            PIPE_READMODE_BYTE |               /* Lectura por bytes */
             PIPE_WAIT,                         /* Modo bloqueante */
             PIPE_UNLIMITED_INSTANCES,          /* Multiples instancias */
             0,                                 /* Tamano de salida (0 = default) */

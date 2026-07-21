@@ -193,10 +193,10 @@ Monitor_DibujarDashboard(const SHARED_BUFFER* pBuf)
     SYSTEMTIME st;
     GetLocalTime(&st);
 
-    /* Mover el cursor al inicio de la consola sin borrar el contenido
-     * previo (efecto de refresco suave sin parpadeo). Si es la primera
-     * vez, limpiamos completamente la pantalla. */
-    printf(ANSI_HOME);
+    /* Limpiar la pantalla completamente antes de redibujar el dashboard.
+     * system("cls") invoca el comando nativo de Windows que borra la
+     * consola, evitando artefactos visuales por sobreescritura. */
+    system("cls");
 
     /* ── CABECERA ──────────────────────────────────────────────── */
     printf("%s%s", ANSI_BG_BLACK, ANSI_BOLD);
@@ -429,6 +429,10 @@ main(void)
     /* Activar colores ANSI: sin esto los codigos de escape se muestran
      * como texto plano en la consola de Windows */
     g_bAnsiOk = Monitor_HabilitarAnsi();
+
+    /* Establecer codificacion UTF-8 para que los caracteres Unicode
+     * (╔══╗, ┌──┐, ███, etc.) se rendericen correctamente */
+    SetConsoleOutputCP(CP_UTF8);
 
     if (!g_bAnsiOk) {
         /* El terminal no soporta ANSI: el dashboard se ve sin colores.
